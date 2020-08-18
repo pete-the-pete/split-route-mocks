@@ -13,6 +13,7 @@ export default function transformer(fileinfo, { jscodeshift: api, report }, opti
     options.mocksIdentifier = 'messagingMocks'
     options.mocksPath = 'voyager-test-helpers/test-support/messaging/route-mocks'
   }
+
   return root
     // find the relevant setupRouteResponseMocks
     .find(api.ExpressionStatement, (node) => {
@@ -50,5 +51,8 @@ export default function transformer(fileinfo, { jscodeshift: api, report }, opti
       return node;
     }).toSource({
       quote: 'single',
-    });
+    }).replace(
+      new RegExp(`\\s(\nimport.+${options.mocksPath})`),
+      '$1'
+    );
 }
