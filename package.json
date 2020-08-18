@@ -1,0 +1,14 @@
+{
+  "name": "split-route-mocks",
+  "version": "1.0.0",
+  "description": "Break apart route-mocks by importing directly in the appropriate *-test.js files.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "pete_the_pete",
+  "license": "ISC",
+  "dependencies": {
+    "jscodeshift-add-imports": "*"
+  }
+}
