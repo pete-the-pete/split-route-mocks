@@ -1,4 +1,23 @@
-const addImports = require('jscodeshift-add-imports');
+let addImports;
+try {
+  addImports = require('jscodeshift-add-imports');
+} catch (e) {
+  addImports = () => {};
+  
+}
+
+function addRouteMocksStatement(api, options, node) {
+  const _addRouteMocksStatement = api.expressionStatement(
+    api.callExpression(
+      api.memberExpression(node.value.expression.callee.object, api.identifier('addRouteMocks')),
+      [api.identifier(options.mocksIdentifier)]
+    )
+  );
+  if (!node.parentPath.parentPath.value.body.filter(n => n.expression.arguments && n.expression.arguments.length && n.expression.arguments[0].name === options.mocksIdentifier).length) {
+    node.insertBefore(_addRouteMocksStatement);
+  }
+  return node;
+}
 
 // Press ctrl+space for code completion
 export default function transformer(fileinfo, { jscodeshift: api, report }, options) {
@@ -24,7 +43,7 @@ export default function transformer(fileinfo, { jscodeshift: api, report }, opti
           return node.expression.arguments[0].value.startsWith(options.mocksPrefix);
         } catch (e) {
           const _arg = node.expression.arguments[0];
-          _report(`${fileinfo.path} using variable for route mocks name. ${node.expression.callee.object.name}.setupRouteResponseMocks(${_arg.name}) at line:${_arg.loc.start.line}`);
+          _report(`using variable for route mocks name. ${node.expression.callee.object.name}.setupRouteResponseMocks(${_arg.name}) at line:${_arg.loc.start.line}`);
         }
       }
     }).forEach((node) => {
@@ -39,14 +58,7 @@ export default function transformer(fileinfo, { jscodeshift: api, report }, opti
       // add the function call if this is the first time see it in the parent
       if (lastBlock !== node.parentPath.parentPath) {
         lastBlock = node.parentPath.parentPath;
-        node.insertBefore(
-          api.expressionStatement(
-            api.callExpression(
-              api.memberExpression(node.value.expression.callee.object, api.identifier('addRouteMocks')),
-              [api.identifier(options.mocksIdentifier)]
-            )
-          )
-        );
+        addRouteMocksStatement(api, options, node);
       }
       return node;
     }).toSource({
