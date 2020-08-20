@@ -28,7 +28,7 @@ export default function transformer(fileinfo, { jscodeshift: api, report }, opti
   const root = api(fileinfo.source);
 
   if (!options.mocksPrefix) {
-    options.mocksPrefix = 'messaging'
+    options.mocksPrefix = 'messaging,MESSAGING,ROUTES[MESSAGING]'
     options.mocksIdentifier = 'messagingMocks'
     options.mocksPath = 'voyager-test-helpers/test-support/messaging/route-mocks'
   }
@@ -46,7 +46,7 @@ export default function transformer(fileinfo, { jscodeshift: api, report }, opti
         } else {
           _arg = node.expression.arguments[0].value;
         }
-        return _arg.startsWith(options.mocksPrefix);
+        return options.mocksPrefix.split(',').some(prefix => _arg.startsWith(prefix));
       }
     }).forEach((node) => {
       // add the import if it doesn't already exist
