@@ -13,7 +13,7 @@ function addRouteMocksStatement(api, options, node) {
       [api.identifier(options.mocksIdentifier)]
     )
   );
-  if (!node.parentPath.parentPath.value.body.filter(n => n.expression.arguments && n.expression.arguments.length && n.expression.arguments[0].name === options.mocksIdentifier).length) {
+  if (!node.parentPath.parentPath.value.body.filter(n => n.expression && n.expression.arguments && n.expression.arguments.length && n.expression.arguments[0].name === options.mocksIdentifier).length) {
     node.insertBefore(_addRouteMocksStatement);
   }
   return node;
@@ -39,12 +39,14 @@ export default function transformer(fileinfo, { jscodeshift: api, report }, opti
       if (node.expression.callee &&
         node.expression.callee.property &&
         node.expression.callee.property.name === 'setupRouteResponseMocks') {
-        try {
-          return node.expression.arguments[0].value.startsWith(options.mocksPrefix);
-        } catch (e) {
-          const _arg = node.expression.arguments[0];
-          _report(`using variable for route mocks name. ${node.expression.callee.object.name}.setupRouteResponseMocks(${_arg.name}) at line:${_arg.loc.start.line}`);
+        let _arg = node.expression.arguments[0];
+        if (_arg.type != 'Literal') {
+          _report(`using variable for route mocks name. ${node.expression.callee.object.name}.setupRouteResponseMocks(${api(_arg).toSource()}) at line:${_arg.loc.start.line}`);
+          _arg = api(_arg).toSource();
+        } else {
+          _arg = node.expression.arguments[0].value;
         }
+        return _arg.startsWith(options.mocksPrefix);
       }
     }).forEach((node) => {
       // add the import if it doesn't already exist
